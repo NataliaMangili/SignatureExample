@@ -1,0 +1,6 @@
+services:
+  signatureexampleapi:
+    image: ${DOCKER_REGISTRY-}signatureexampleapi
+    build:
+      context: .
+      dockerfile: gateway/SignatureExampleAPI/Dockerfile
