@@ -1,0 +1,6 @@
+@SignatureExampleAPI_HostAddress = http://localhost:5053
+
+GET {{SignatureExampleAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
