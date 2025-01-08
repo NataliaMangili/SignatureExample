@@ -1,0 +1,35 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Helpers.Protos.LogService";
+
+package HelperLog;
+
+service LogServiceApi {
+    rpc SaveLog (LogRequest) returns (LogResponse);
+    rpc GetLogs (LogFilter) returns (stream LogMessage);
+}
+
+message LogRequest {
+    string level = 1;
+    string message = 2;
+    string source = 3;
+    string details = 4;
+}
+
+message LogResponse {
+    string message = 1;
+}
+
+message LogFilter {
+    string source = 1;
+    string level = 2;
+}
+
+message LogMessage {
+    string id = 1;
+    string timestamp = 2;
+    string level = 3;
+    string message = 4;
+    string source = 5;
+    string details = 6;
+}
