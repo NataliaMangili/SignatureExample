@@ -28,7 +28,8 @@ public class LogGrpcService(ILogRepository logRepository) : LogServiceApi.LogSer
     {
         IEnumerable<LogEntry> logs = await _logRepository.GetLogsAsync(request.Source, request.Level);
 
-        logs.ToList().ForEach(async log =>
+        //Task.WhenAll para garantir que todas as operações assíncronas terminarão antes que o método termine.
+        await Task.WhenAll(logs.Select(async log =>
         {
             LogMessage logMessage = new()
             {
@@ -41,6 +42,6 @@ public class LogGrpcService(ILogRepository logRepository) : LogServiceApi.LogSer
             };
 
             await responseStream.WriteAsync(logMessage);
-        });
+        }));
     }
 }
