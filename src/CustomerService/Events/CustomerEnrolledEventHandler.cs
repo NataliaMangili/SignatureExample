@@ -1,0 +1,35 @@
+﻿using CustomerService.Models;
+using CustomerService.Services;
+using EventBus.Abstractions;
+
+namespace CustomerService.Events;
+
+public class CustomerEnrolledEventHandler(/*AppDbContext dbContext,*/ EmailService emailService) : IIntegrationEventHandler<CustomerEnrolledEvent>
+{
+    //private readonly AppDbContext _dbContext;
+    private readonly EmailService _emailService = emailService;
+
+    public async Task Handle(CustomerEnrolledEvent @event)
+    {
+        // Salva o customer no banco
+        Customer customer = new()
+        {
+            Name = @event.Name,
+            Email = @event.Email,
+            //Password = HashPassword("123456")
+        };
+
+        //await _dbContext.Customers.AddAsync(Customer);
+        //await _dbContext.SaveChangesAsync();
+
+        // Enviar email
+        await _emailService.SendEmail(new Dictionary<string, string>
+        {
+            { "name", @event.Name },
+            { "email", @event.Email }
+        });
+
+        //tratar com LOG TODO
+        Console.WriteLine($"Processed Event : {nameof(CustomerEnrolledEvent)}");
+    }
+}
