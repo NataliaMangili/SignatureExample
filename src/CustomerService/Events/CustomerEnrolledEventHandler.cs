@@ -11,13 +11,11 @@ public class CustomerEnrolledEventHandler(/*AppDbContext dbContext,*/ EmailServi
 
     public async Task Handle(CustomerEnrolledEvent @event)
     {
-        // Salva o customer no banco
-        Customer customer = new()
-        {
-            Name = @event.Name,
-            Email = @event.Email,
-            //Password = HashPassword("123456")
-        };
+        Customer customer = new(
+            name: "João Silva",
+            email: "joao.silva@example.com", 
+            password: "Senha123"
+        );
 
         //await _dbContext.Customers.AddAsync(Customer);
         //await _dbContext.SaveChangesAsync();
