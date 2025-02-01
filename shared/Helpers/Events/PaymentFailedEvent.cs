@@ -1,4 +1,4 @@
-﻿namespace PaymentService.Events;
+﻿namespace Helpers.Events;
 
 public class PaymentFailedEvent
 {
