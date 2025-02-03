@@ -11,4 +11,9 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\EventBus\EventBus.csproj" />
+    <ProjectReference Include="..\..\shared\Helpers\Helpers.csproj" />
+  </ItemGroup>
+
 </Project>
