@@ -1,6 +1,7 @@
 ﻿using CustomerService.Models;
 using CustomerService.Services;
 using EventBus.Abstractions;
+using Helpers.Events;
 
 namespace CustomerService.Events;
 

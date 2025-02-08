@@ -1,5 +1,6 @@
 ﻿using EventBus.Abstractions;
 using CustomerService.Events;
+using Helpers.Events;
 
 namespace CustomerService.Background;
 
