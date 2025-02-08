@@ -7,7 +7,17 @@ public class Scheduler(ILogger<Scheduler> logger)
 
     public void Schedule(string taskName, object data)
     {
-        //Logica da tarefa em segundo plano
+        // Log para o agendamento da tarefa
         _logger.LogInformation($"Task {taskName} scheduled with data: {data}");
+
+        // Simula o agendamento: após 5 segundos, a tarefa é "executada"
+        Task.Run(async () =>
+        {
+            // Aguarda 5 segundos para simular o delay do agendamento
+            await Task.Delay(5000);
+
+            _logger.LogInformation($"Task {taskName} executed with data: {data}");
+            // Lógica real da tarefa que deve ser executada
+        });
     }
 }
