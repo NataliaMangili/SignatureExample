@@ -6,22 +6,12 @@ services:
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672" 
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
-
-  nginx:
-    image: nginx
-    container_name: nginx_gateway
-    ports:
-      - "80:80"
-    volumes:
-      - ./gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - deliveryservice
-      - paymentservice
-      - logservice
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - my-network
 
   deliveryservice:
     build:
@@ -31,6 +21,8 @@ services:
       - "5001:5001"
     depends_on:
       - rabbitmq
+    networks:
+      - my-network
 
   paymentservice:
     build:
@@ -40,6 +32,8 @@ services:
       - "5002:5002"
     depends_on:
       - rabbitmq
+    networks:
+      - my-network
 
   logservice:
     build:
@@ -49,3 +43,34 @@ services:
       - "5003:5003"
     depends_on:
       - rabbitmq
+    networks:
+      - my-network
+
+  customerservice:
+    build:
+      context: ./src/CustomerService
+    container_name: customerservice
+    environment:
+      - ASPNETCORE_URLS=http://+:5004
+    ports:
+      - "5004:5004"
+    depends_on:
+      - rabbitmq
+    networks:
+      - my-network
+
+  signatureexampleapi:
+    build:
+      context: .
+      dockerfile: ./gateway/SignatureExampleAPI/Dockerfile
+    container_name: signatureexampleapi
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbitmq
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
