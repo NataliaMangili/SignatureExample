@@ -1,28 +1,30 @@
 ﻿using EventBus.Abstractions;
-using EventBus.Events;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using Serilog;
-using System.Text;
 using System.Text.Json;
+using System.Text;
+using RabbitMQ.Client.Events;
+using System;
 
 namespace EventBus.RabbitMQ;
-
 public class RabbitMQEventBus : IEventBus
 {
     private readonly RabbitMQConnection _connection;
     private readonly ILogger<RabbitMQEventBus> _logger;
     private readonly string _exchangeName = "event_bus";
+    private readonly IServiceProvider _serviceProvider;
     private readonly IModel _channel;
 
-    public RabbitMQEventBus(RabbitMQConnection connection, ILogger<RabbitMQEventBus> logger)
+    public RabbitMQEventBus(RabbitMQConnection connection, ILogger<RabbitMQEventBus> logger, IServiceProvider serviceProvider)
     {
         _connection = connection;
         _logger = logger;
-        _channel = _connection.CreateConnection().CreateModel();
+        _serviceProvider = serviceProvider;
 
-        // Configura a exchange RabbitMQ
+        // Pegar a conexão já estabelecida e criar um modelo (canal)
+        _channel = _connection.CreateModel();
+
+        // Configura a exchange RabbitMQ (tipo fanout para enviar a mensagem para todas as filas)
         _channel.ExchangeDeclare(exchange: _exchangeName, type: ExchangeType.Fanout);
 
         _logger.LogInformation("Exchange configurada: {ExchangeName}", _exchangeName);
@@ -30,14 +32,14 @@ public class RabbitMQEventBus : IEventBus
 
     public void Publish(IntegrationEvent @event)
     {
-        string eventName = @event.GetType().Name; // Get Nome do evento
+        string eventName = @event.GetType().Name; // Nome do evento
         string message = JsonSerializer.Serialize(@event); // Serializa o evento para JSON
         byte[] body = Encoding.UTF8.GetBytes(message); // Converte para byte array
 
-        // Publica msgm na exchange
+        // Publica a mensagem na exchange
         _channel.BasicPublish(
             exchange: _exchangeName,
-            routingKey: "",
+            routingKey: "", // Com fanout, não usamos routingKey
             basicProperties: null,
             body: body);
 
@@ -46,24 +48,26 @@ public class RabbitMQEventBus : IEventBus
 
     public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        string queueName = typeof(T).Name; // Nome da fila igual ao nome do evento
+        string queueName = $"{typeof(T).Name}_{Guid.NewGuid()}"; // Nome único da fila para cada consumidor (microserviço)
 
-        // Declara a fila e faz o binding à exchange
+        // Declara a fila do microserviço (cada microserviço terá uma fila diferente)
         _channel.QueueDeclare(
             queue: queueName,
             durable: true,
-            exclusive: false,
+            exclusive: false,  // Fila não exclusiva, permitindo múltiplos consumidores
             autoDelete: false,
             arguments: null);
 
+        // Faz o binding da fila à exchange fanout
         _channel.QueueBind(
             queue: queueName,
             exchange: _exchangeName,
             routingKey: "");
 
         // Cria o consumidor
-        EventingBasicConsumer consumer = new(_channel);
+        EventConsumer<T, TH> consumer = new EventConsumer<T, TH>(_channel, _serviceProvider);
 
+        // Aqui, ao invés de usar 'EventingBasicConsumer', usamos 'EventConsumer' diretamente
         consumer.Received += async (model, ea) =>
         {
             byte[] body = ea.Body.ToArray();
@@ -72,10 +76,7 @@ public class RabbitMQEventBus : IEventBus
             try
             {
                 T? @event = JsonSerializer.Deserialize<T>(message); // Deserializa para o tipo do evento
-                TH handler = Activator.CreateInstance<TH>(); // Cria instância do handler
-                await handler.Handle(@event); // Processa o evento
-
-                _logger.LogInformation("Evento processado: {EventName}", typeof(T).Name);
+                await consumer.HandleAsync(@event); // Chama o método HandleAsync do consumidor
             }
             catch (Exception ex)
             {
@@ -83,12 +84,8 @@ public class RabbitMQEventBus : IEventBus
             }
         };
 
-        // Consumir mensagens da fila
-        _channel.BasicConsume(
-            queue: queueName,
-            autoAck: true,
-            consumer: consumer);
-
+        // Inicia o consumo das mensagens da fila
+        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
         _logger.LogInformation("Assinatura criada para o evento: {EventName}", queueName);
     }
 
