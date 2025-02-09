@@ -6,10 +6,11 @@ namespace EventBus;
 
 public static class EventBusExtensions
 {
-    public static IServiceCollection AddEventBus(this IServiceCollection services, string rabbitMqHost)
+    public static IServiceCollection AddEventBus(this IServiceCollection services)
     {
-        services.AddSingleton(sp =>
-            new RabbitMQConnection(rabbitMqHost, "admin", "admin"));
+        // Registrando RabbitMQConnection usando as configurações do Options Pattern
+        services.AddSingleton<RabbitMQConnection>();
+
         services.AddSingleton<IEventBus, RabbitMQEventBus>();
 
         return services;
