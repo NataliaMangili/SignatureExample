@@ -1,0 +1,21 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "CustomerService";
+
+package customerservice;
+
+// Serviço gRPC
+service CustomerServiceGRPC {
+  rpc EnrollCustomer (EnrollCustomerRequest) returns (EnrollCustomerResponse);
+}
+
+// Definindo o Request e Response
+message EnrollCustomerRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message EnrollCustomerResponse {
+  string message = 1;
+}
