@@ -30,7 +30,7 @@ public class Customer
         get => _email;
         set
         {
-            if (!IsValidEmail(value)) throw new ArgumentException("Invalid email format.");
+            //if (!IsValidEmail(value)) throw new ArgumentException("Invalid email format.");
             _email = value;
         }
     }
@@ -40,7 +40,7 @@ public class Customer
         get => "********";
         private set
         {
-            if (!IsValidPassword(value)) throw new ArgumentException("Password must be at least 8 characters, include an uppercase letter and a number.");
+            //if (!IsValidPassword(value)) throw new ArgumentException("Password must be at least 8 characters, include an uppercase letter and a number.");
             _password = value;
         }
     }
@@ -53,7 +53,7 @@ public class Customer
 
     public void SetPassword(string password)
     {
-        if (!IsValidPassword(password)) throw new ArgumentException("Password must be at least 8 characters, include an uppercase letter and a number.");
+        //if (!IsValidPassword(password)) throw new ArgumentException("Password must be at least 8 characters, include an uppercase letter and a number.");
         _password = password;
     }
 

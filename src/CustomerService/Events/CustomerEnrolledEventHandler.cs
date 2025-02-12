@@ -2,33 +2,34 @@
 using CustomerService.Services;
 using EventBus.Abstractions;
 using Helpers.Events;
+using System;
 
 namespace CustomerService.Events;
 
-public class CustomerEnrolledEventHandler(/*AppDbContext dbContext,*/ EmailService emailService) : IIntegrationEventHandler<CustomerEnrolledEvent>
+public class CustomerEnrolledEventHandler(EmailService emailService /* AppDbContext dbContext*/) : IIntegrationEventHandler<CustomerEnrolledEvent>
 {
-    //private readonly AppDbContext _dbContext;
     private readonly EmailService _emailService = emailService;
 
     public async Task Handle(CustomerEnrolledEvent @event)
     {
         Customer customer = new(
             name: "João Silva",
-            email: "joao.silva@example.com", 
+            email: "joao.silva@example.com",
             password: "Senha123"
         );
 
-        //await _dbContext.Customers.AddAsync(Customer);
-        //await _dbContext.SaveChangesAsync();
+        // persistência
+        // await _dbContext.Customers.AddAsync(customer);
+        // await _dbContext.SaveChangesAsync();
 
         // Enviar email
-        await _emailService.SendEmail(new Dictionary<string, string>
-        {
-            { "name", @event.Name },
-            { "email", @event.Email }
-        });
+    //    await _emailService.SendEmail(new Dictionary<string, string>
+    //{
+    //    { "name", @event.Name },
+    //    { "email", @event.Email }
+    //});
 
-        //tratar com LOG TODO
-        Console.WriteLine($"Processed Event : {nameof(CustomerEnrolledEvent)}");
+        // Tratar com log (TODO)
+        Console.WriteLine($"Processed Event TESTE CUSTOMER : {nameof(CustomerEnrolledEvent)}");
     }
 }
