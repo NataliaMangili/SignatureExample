@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["gateway/SignatureExampleAPI/SignatureExampleAPI.csproj", "gateway/SignatureExampleAPI/"]
+COPY ["shared/Helpers/Helpers.csproj", "shared/Helpers/"]
+COPY ["shared/EventBus/EventBus.csproj", "shared/EventBus/"]
 RUN dotnet restore "./gateway/SignatureExampleAPI/SignatureExampleAPI.csproj"
 COPY . .
 WORKDIR "/src/gateway/SignatureExampleAPI"
