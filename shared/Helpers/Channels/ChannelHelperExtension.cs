@@ -18,7 +18,7 @@ public static class ChannelHelperExtension
 
     private static string GetServiceUrl(IConfiguration config, string serviceName)
     {
-        string? url = config[$"services:{serviceName}Url"];
+        string? url = config[$"services:{serviceName}"];
         if (string.IsNullOrEmpty(url))
         {
             throw new InvalidOperationException($"Configuration for '{serviceName}Url' is missing or empty.");
