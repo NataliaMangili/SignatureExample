@@ -1,3 +1,6 @@
+using EventBus.Abstractions;
+using EventBus.RabbitMQ;
+using Microsoft.Extensions.Options;
 using PaymentService;
 using PaymentService.Data;
 using PaymentService.Services;
@@ -11,17 +14,36 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 
 var host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((context, services) =>
+    .ConfigureServices((hostContext, services) =>
     {
-        //services.AddDbContext<PaymentDbContext>(); // Banco de Dados
-        services.AddScoped<PaymentRepository>();   // Repositório
-        //services.AddScoped<PaymentService>();      // Serviço de Pagamento
-        services.AddScoped<EnrollCustomer>();        // Inscrição do Cliente
-        services.AddScoped<Scheduler>();           // Agendador de Tarefas
-        services.AddScoped<EmailService>();        // Serviço de Email
-        services.AddHostedService<Worker>();       // Worker para eventos
+        // Banco de Dados e Repositório
+        // services.AddDbContext<PaymentDbContext>();
+        services.AddScoped<PaymentRepository>(); // Scoped para repositório de pagamentos
+
+        // services.AddScoped<PaymentService>(); 
+        services.AddTransient<EnrollCustomer>(); 
+        services.AddTransient<CustomerEnrolledEventHandler>(); 
+        services.AddScoped<Scheduler>();
+        services.AddScoped<EmailService>();
+
+        // Configuração do RabbitMQ
+        services.Configure<RabbitMQSettings>(hostContext.Configuration.GetSection("RabbitMQ"));
+
+        // Criando RabbitMQConnection com IOptions<RabbitMQSettings>
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<RabbitMQSettings>>();
+            return new RabbitMQConnection(options);
+        });
+
+        // Registrando EventBus como Singleton
+        services.AddSingleton<IEventBus, RabbitMQEventBus>();
+
+        // Worker para eventos (vem depois do EventBus)
+        services.AddHostedService<Worker>(); // Serviço em segundo plano que processa eventos
     })
     .Build();
+
 
 await host.RunAsync();
 
