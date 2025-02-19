@@ -1,43 +1,48 @@
 using CustomerService.Background;
 using CustomerService.Events;
+using CustomerService.Services;
 using EventBus.Abstractions;
 using EventBus.RabbitMQ;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+// Configuração do RabbitMQ
+builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection("RabbitMQ"));
 
+// Criando RabbitMQConnection com IOptions<RabbitMQSettings>
+builder.Services.AddSingleton(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<RabbitMQSettings>>();
+    return new RabbitMQConnection(options);
+});
 
-app.UseHttpsRedirection();
+// Registrando EventBus
+builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
 
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((hostContext, services) =>
+// Handlers de Eventos e Workers
+builder.Services.AddTransient<EmailService>();  // EmailService como Transient
+builder.Services.AddTransient<CustomerEnrolledEventHandler>();  // CustomerEnrolledEventHandler como Transient
+builder.Services.AddHostedService<Worker>();  // Worker como Transient
+
+//configure service port to listen
+builder.WebHost.ConfigureKestrel(op =>
+{
+    op.ListenAnyIP(5004, li =>
     {
-        // Context
-        //services.AddDbContext<AppDbContext>();
+        li.Protocols = HttpProtocols.Http2;
+    });
+});
 
-        // Configura o RabbitMQEventBus e dependências
-        services.AddSingleton<RabbitMQConnection>(sp =>
-        {
-            return new RabbitMQConnection(
-                hostContext.Configuration["RabbitMQ:HostName"],
-                hostContext.Configuration["RabbitMQ:UserName"],
-                hostContext.Configuration["RabbitMQ:Password"]
-            );
-        });
+// Configura os serviços gRPC
+builder.Services.AddGrpc();
 
-        services.AddSingleton<IEventBus, RabbitMQEventBus>();
+var app = builder.Build();
+// app.UseHttpsRedirection();
 
-        // Configura os Handlers de Eventos
-        services.AddTransient<CustomerEnrolledEventHandler>();
-
-        // Adiciona o Worker
-        services.AddHostedService<Worker>();
-    })
-    .Build();
-
-host.Run();
+// Serviço gRPC
+app.MapGrpcService<CustomersService>();
 
 
 app.Run();
-
